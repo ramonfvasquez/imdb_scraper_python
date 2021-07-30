@@ -501,7 +501,7 @@ def get_social_media_file_name(site):
 
 def get_social_media_text(site):
     text = ""
-    if site.title() != "Official Site":
+    if not "Official Site" in site.title():
         text = site.replace("Official ", "")
     else:
         text = site
