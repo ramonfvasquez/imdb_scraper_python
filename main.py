@@ -373,6 +373,15 @@ class FilmWindow(tk.Toplevel):
         self.lbl_runtime["text"] = runtime  # Runtime
 
     def show_poster(self):
+        self.cnv_poster.create_text(
+            333,
+            10,
+            text="Click on the poster to access the film's IMDb page.",
+            anchor=tk.NE,
+            font="Default 8",
+            fill="white",
+        )
+
         # Shows the film poster if available, if not, shows a message
         try:
             self.poster = scraper.WebImage(self.url).get()
@@ -391,6 +400,7 @@ class FilmWindow(tk.Toplevel):
         im = Image.open("%sicons/imdb.png" % (STATIC_ROOT)).resize((64, 64))
         self.img = ImageTk.PhotoImage(im)
         self.cnv_poster.create_image(135, 541, anchor=tk.CENTER, image=self.img)
+
         self.cnv_poster.create_text(
             290,
             530,
