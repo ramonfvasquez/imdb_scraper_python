@@ -6,7 +6,7 @@ class DBConnector:
         return mysql.connector.connect(
             host="localhost",
             user="root",
-            password="",
+            password="R+D@11",
             database=database,
             auth_plugin="mysql_native_password",
         )
@@ -19,7 +19,7 @@ class DBConnector:
             cur.execute(sql)
             print("Database created!")
         except:
-            print()
+            return
 
         db.close()
 
@@ -38,7 +38,7 @@ class DBConnector:
             cur.execute(sql)
             print("Table created!")
         except:
-            print()
+            return
 
         db.close()
 
@@ -93,6 +93,6 @@ class DBConnector:
             cur.execute(sql)
             db.commit()
         except:
-            print()
+            return
 
         db.close()

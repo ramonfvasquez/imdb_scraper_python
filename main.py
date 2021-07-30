@@ -1,6 +1,7 @@
 import os
 import re
 import tkinter as tk
+from tkinter import PhotoImage, font
 import webbrowser
 from PIL import Image, ImageTk
 from tkinter import ttk
@@ -9,7 +10,7 @@ import scraper
 from db import DBConnector
 
 BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
-STATIC_ROOT = os.path.join(BASE_DIR, "")
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 
 class IMDbScraper:
@@ -22,7 +23,7 @@ class IMDbScraper:
         self.container.pack(fill=tk.BOTH)
 
         self.frm_films = tk.LabelFrame(self.container, text="Films")
-        self.frm_films.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
+        self.frm_films.grid(row=1, column=0, padx=20, pady=10, sticky=tk.NSEW)
 
         self.lbx_results = tk.Listbox(self.frm_films, width=70, height=30)
         self.lbx_results.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
@@ -32,8 +33,15 @@ class IMDbScraper:
         self.listbox_scroll.grid(row=0, column=0, pady=5, sticky="nse")
         self.lbx_results.configure(yscrollcommand=self.listbox_scroll.set)
 
+        tk.Label(
+            self.container,
+            text="Double click on a film title for further information.",
+            bg="dark green",
+            fg="white",
+        ).grid(row=0, column=0, pady=10, ipadx=2, ipady=2, sticky=tk.NSEW)
+
         self.frm_data = tk.LabelFrame(self.container)
-        self.frm_data.grid(row=1, column=0, padx=10, pady=10, sticky=tk.NSEW)
+        self.frm_data.grid(row=2, column=0, padx=20, pady=10, sticky=tk.NSEW)
 
         tk.Label(self.frm_data, text="Title:", font="Default 10 bold").grid(
             row=0, column=0, padx=5, pady=5, sticky=tk.E
@@ -65,10 +73,19 @@ class IMDbScraper:
         self.lbl_rating = tk.Label(self.frm_data, width=60, anchor=tk.W)
         self.lbl_rating.grid(row=4, column=1, padx=5, pady=5, sticky=tk.W)
 
-        scraper.FilmScraper().get_basic_film_data()
+        self.lbl_info = tk.Label(
+            self.container,
+            text="Built by Ramón Vásquez - Powered by Python + MySQL",
+            state="disabled",
+            font="Default 8",
+            anchor=tk.W,
+        )
+        self.lbl_info.grid(row=3, column=0, padx=20, pady=10, sticky=tk.NSEW)
+
+        scraper.FilmScraper().get_basic_data()
+        self.bindings()
         self.show_films()
         self.set_default_item()
-        self.bindings()
 
         self.root.mainloop()
 
@@ -82,6 +99,18 @@ class IMDbScraper:
         self.lbx_results.bind(
             "<Double-1>",
             lambda _: self.win_film(self.lbx_results.curselection()[0] + 1),
+        )
+
+        self.lbl_title.bind(
+            "<Double-1>",
+            lambda _: self.win_film(self.lbx_results.curselection()[0] + 1),
+        )
+
+        self.lbl_info.bind(
+            "<Button-1>",
+            lambda event: open_browser(
+                event, "https://github.com/ramonfvasquez/imdb_scraper_python"
+            ),
         )
 
     def set_default_item(self):  # Selects the first element of the film listbox
@@ -138,22 +167,31 @@ class FilmWindow(tk.Toplevel):
         self.container = tk.Frame(self)
         self.container.pack(fill=tk.BOTH, expand=True)
 
-        self.cnv_poster = tk.Canvas(self.container, width=400, height=500, bg="black")
-        self.cnv_poster.grid(row=0, column=0, padx=20, pady=20, sticky=tk.NSEW)
+        self.frm_data = tk.Frame(self.container)
+        self.frm_data.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
 
-        self.frm_data = tk.LabelFrame(self.container, text="Cast & Crew")
-        self.frm_data.grid(row=0, column=1, padx=10, pady=10, sticky=tk.NSEW)
+        # POSTER
 
-        tk.Label(self.frm_data, text="Director:", font="Default 10 bold").grid(
+        self.cnv_poster = tk.Canvas(self.frm_data, width=400, height=570, bg="black")
+        self.cnv_poster.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
+
+        # CAST & CREW
+
+        self.frm_cast_and_crew = tk.LabelFrame(self.frm_data, text="Cast & Crew")
+        self.frm_cast_and_crew.grid(
+            row=0, column=1, padx=10, pady=10, ipadx=5, ipady=5, sticky=tk.NSEW
+        )
+
+        tk.Label(self.frm_cast_and_crew, text="Director:", font="Default 10 bold").grid(
             row=0, column=0, padx=5, pady=5, sticky=tk.E
         )
-        self.lbl_director = tk.Label(self.frm_data, width=80, anchor=tk.W)
+        self.lbl_director = tk.Label(self.frm_cast_and_crew, width=80, anchor=tk.W)
         self.lbl_director.grid(row=0, column=1, padx=5, pady=5, sticky=tk.NSEW)
 
-        tk.Label(self.frm_data, text="Writers:", font="Default 10 bold").grid(
+        tk.Label(self.frm_cast_and_crew, text="Writers:", font="Default 10 bold").grid(
             row=1, column=0, padx=5, pady=5, sticky=tk.NE
         )
-        self.tree_writers = ttk.Treeview(self.frm_data, show="tree", height=4)
+        self.tree_writers = ttk.Treeview(self.frm_cast_and_crew, show="tree", height=4)
         self.tree_writers.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NSEW)
         self.tree_writers["columns"] = ["writer"]
 
@@ -161,15 +199,15 @@ class FilmWindow(tk.Toplevel):
         self.tree_writers.column("writer", anchor=tk.NW, width=750, stretch=tk.NO)
 
         self.writers_scroll = ttk.Scrollbar(
-            self.frm_data, orient="vertical", command=self.tree_writers.yview
+            self.frm_cast_and_crew, orient="vertical", command=self.tree_writers.yview
         )
         self.writers_scroll.grid(row=1, column=1, pady=5, sticky="nse")
         self.tree_writers.configure(yscrollcommand=self.writers_scroll.set)
 
-        tk.Label(self.frm_data, text="Cast:", font="Default 10 bold").grid(
+        tk.Label(self.frm_cast_and_crew, text="Cast:", font="Default 10 bold").grid(
             row=2, column=0, padx=5, pady=5, sticky=tk.NE
         )
-        self.tree_cast = ttk.Treeview(self.frm_data, height=20)
+        self.tree_cast = ttk.Treeview(self.frm_cast_and_crew, height=20)
         self.tree_cast.grid(row=2, column=1, padx=5, pady=5, sticky=tk.NSEW)
         self.tree_cast["columns"] = ["actor", "character"]
 
@@ -182,32 +220,58 @@ class FilmWindow(tk.Toplevel):
         self.tree_cast.heading("character", text="Character", anchor=tk.CENTER)
 
         self.cast_scroll = ttk.Scrollbar(
-            self.frm_data, orient="vertical", command=self.tree_cast.yview
+            self.frm_cast_and_crew, orient="vertical", command=self.tree_cast.yview
         )
         self.cast_scroll.grid(row=2, column=1, pady=5, sticky="nse")
         self.tree_cast.configure(yscrollcommand=self.cast_scroll.set)
 
-        tk.Label(self.frm_data, text="Country:", font="Default 10 bold").grid(
-            row=3, column=0
+        # TECHNICAL DATA
+
+        self.frm_technical_details = tk.LabelFrame(
+            self.frm_data, text="Technical Details"
+        )
+        self.frm_technical_details.grid(
+            row=1, column=1, padx=10, pady=10, ipadx=5, ipady=5, sticky=tk.NSEW
         )
 
-        self.frm_country = tk.Frame(self.frm_data)
+        tk.Label(
+            self.frm_technical_details, text="Country:", font="Default 10 bold"
+        ).grid(row=3, column=0, padx=5, pady=5, sticky=tk.NE)
+
+        self.frm_country = tk.Frame(self.frm_technical_details)
         self.frm_country.grid(row=3, column=1, sticky=tk.W)
 
-        tk.Label(self.frm_data, text="Runtime:", font="Default 10 bold").grid(
-            row=4, column=0
-        )
-        self.lbl_runtime = tk.Label(self.frm_data, width=80, anchor=tk.W)
-        self.lbl_runtime.grid(row=4, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        tk.Label(
+            self.frm_technical_details, text="Language:", font="Default 10 bold"
+        ).grid(row=4, column=0, padx=5, pady=5, sticky=tk.NE)
+        self.lbl_language = tk.Label(self.frm_technical_details, width=80, anchor=tk.W)
+        self.lbl_language.grid(row=4, column=1, padx=5, pady=5, sticky=tk.NSEW)
+
+        tk.Label(
+            self.frm_technical_details, text="Color:", font="Default 10 bold"
+        ).grid(row=5, column=0, padx=5, pady=5, sticky=tk.NE)
+        self.lbl_color = tk.Label(self.frm_technical_details, width=80, anchor=tk.W)
+        self.lbl_color.grid(row=5, column=1, padx=5, pady=5, sticky=tk.NSEW)
+
+        tk.Label(
+            self.frm_technical_details, text="Runtime:", font="Default 10 bold"
+        ).grid(row=6, column=0, padx=5, pady=5, sticky=tk.NE)
+        self.lbl_runtime = tk.Label(self.frm_technical_details, width=80, anchor=tk.W)
+        self.lbl_runtime.grid(row=6, column=1, padx=5, pady=5, sticky=tk.NSEW)
 
         self.show_poster()
         self.show_full_data()
         self.bindings()
 
     def bindings(self):  # Sets the bindings for the widgets
-        self.cnv_poster.bind("<Button-1>", self.open_browser)
+        self.cnv_poster.bind(
+            "<Button-1>",
+            lambda event: open_browser(
+                "https://www.imdb.com/title/%s/reference" % (self.film_id)
+            ),
+        )
 
-        self.tree_writers.bindtags((self.tree_writers, self.frm_data, "all"))
+        self.tree_writers.bindtags((self.tree_writers, self.frm_cast_and_crew, "all"))
         self.tree_writers.bind(
             "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_writers)
         )
@@ -215,7 +279,7 @@ class FilmWindow(tk.Toplevel):
             "<Leave>",
             lambda event: self._unbound_to_mousewheel(event, self.tree_writers),
         )
-        self.tree_cast.bindtags((self.tree_cast, self.frm_data, "all"))
+        self.tree_cast.bindtags((self.tree_cast, self.frm_cast_and_crew, "all"))
         self.tree_cast.bind(
             "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_cast)
         )
@@ -223,38 +287,19 @@ class FilmWindow(tk.Toplevel):
             "<Leave>", lambda event: self._unbound_to_mousewheel(event, self.tree_cast)
         )
 
-    def open_browser(self, event):  # Opens the IMDb page of the selected film
-        webbrowser.open("https://www.imdb.com/title/%s/reference" % (self.film_id))
-
     def poster_available(self):  # Creates the film poster
-        self.cnv_poster.create_text(
-            240,
-            550,
-            text="Rating: %s" % (self.rating),
-            anchor=tk.NE,
-            font="Default 10 bold",
-            fill="white",
-        )
-        self.cnv_poster.create_image(200, 270, anchor=tk.CENTER, image=self.poster)
+        self.cnv_poster.create_image(200, 265, anchor=tk.CENTER, image=self.poster)
 
     def poster_unavailable(self):  # Creates a message for unavailable posters
         unavailable = "Oh, no! The poster is not available! :("
 
         self.cnv_poster.create_text(
-            330,
-            270,
+            340,
+            265,
             text=unavailable,
             anchor=tk.NE,
             font="Default 10 bold",
             fill="red",
-        )
-        self.cnv_poster.create_text(
-            240,
-            550,
-            text="Rating: %s" % (self.rating),
-            anchor=tk.NE,
-            font="Default 10 bold",
-            fill="white",
         )
 
     def show_actors(self, cast):  # Shows the full cast in a treeview
@@ -295,7 +340,7 @@ class FilmWindow(tk.Toplevel):
             lbl_country.image = self.flag
 
     def show_full_data(self):  # Shows the scraped data of the selected film
-        data = scraper.FilmScraper().get_full_film_data(self.film_id)
+        data = scraper.FilmScraper().get_crew(self.film_id)
 
         self.lbl_director["text"] = ", ".join(sorted(data["director"]))  # Directors
 
@@ -305,10 +350,23 @@ class FilmWindow(tk.Toplevel):
         cast = data["cast"]  # Full cast
         self.show_actors(cast)
 
-        runtime, countries = scraper.FilmScraper().get_additional_data(self.film_id)
+        (
+            runtime,
+            countries,
+            languages,
+            color,
+            social,
+        ) = scraper.FilmScraper().scrape_technical_data(self.film_id)
+
+        self.show_social_media(social)
 
         countries = sorted(countries.split(", "))  # Countries
         self.show_flags(countries)
+
+        # Languages
+        self.lbl_language["text"] = ", ".join(sorted(languages.split(", ")))
+
+        self.lbl_color["text"] = color  # Color
 
         self.lbl_runtime["text"] = runtime  # Runtime
 
@@ -325,6 +383,73 @@ class FilmWindow(tk.Toplevel):
             self.url = re.sub("@.*", "@@._V1_FMjpg_UY473_.jpg", self.url)
             self.poster = scraper.WebImage(self.url).get()
             self.poster_available()
+
+        self.show_rating()
+
+    def show_rating(self):
+        self.cnv_poster.create_text(
+            255,
+            530,
+            text="Rating: %s" % (self.rating),
+            anchor=tk.NE,
+            font="Default 14 bold",
+            fill="white",
+        )
+
+    def show_social_media(self, social):
+        """
+        If the selected film has social media, inserts a frame, and within it
+        some labels depending on the number of sites. For every multiple of 4,
+        the new labels are placed in a new column. Binds each label with a link
+        to its corresponding URL.
+        """
+        if social:
+            self.frm_social = tk.LabelFrame(self.frm_data, text="Social Media")
+            self.frm_social.grid(
+                row=1, column=0, padx=10, pady=10, ipadx=10, ipady=5, sticky=tk.NSEW
+            )
+
+            eval_link = lambda x: (lambda p: open_browser(x))
+            i = 0
+            j = 0
+            for key, value in social.items():
+                lbl_social = tk.Label(
+                    self.frm_social,
+                    fg="blue",
+                    anchor=tk.W,
+                )
+                lbl_social.grid(row=i, column=j, padx=5, pady=5, sticky=tk.NSEW)
+                lbl_social.bind("<Button-1>", eval_link(value))
+
+                self.social_icon = None
+
+                site = get_social_media(key)
+
+                title = ""
+                if len(key) > 20:
+                    title = key[:5] + re.sub(".+", " ... ", key[5:-6]) + key[-6:]
+                else:
+                    title = key
+
+                if site:
+                    img = Image.open("%sicons/%s.png" % (STATIC_ROOT, site)).resize(
+                        (16, 16)
+                    )
+                    self.social_icon = ImageTk.PhotoImage(img)
+
+                    lbl_social["text"] = " " + title
+                    lbl_social["compound"] = tk.LEFT
+                    lbl_social["image"] = self.social_icon
+                    lbl_social.image = self.social_icon
+
+                else:
+                    lbl_social["text"] = title
+
+                i += 1
+
+                if i % 4 == 0:
+                    i = 0
+                    j += 1
 
     def show_writers(self, writers):  # Shows the writers in a treeview
         for i, writer in enumerate(writers):
@@ -359,6 +484,22 @@ class FilmWindow(tk.Toplevel):
 
         # On Windows
         listbox.unbind_all("<MouseWheel>")
+
+
+def get_social_media(site):
+    social = ""
+    if "Facebook" in site.title():
+        social = "facebook"
+    elif "Instagram" in site.title():
+        social = "instagram"
+    elif "Twitter" in site.title():
+        social = "twitter"
+
+    return social
+
+
+def open_browser(url):
+    webbrowser.open(url)
 
 
 def main():

@@ -9,62 +9,43 @@ from db import DBConnector
 
 
 class FilmScraper:
-    def scrape_film(self, film_id):
-        # Scrapes the directors, and the writers of the selected film
-        url = "https://www.imdb.com/title/%s/fullcredits" % (film_id)
-        page = requests.get(url)
-        soup = BeautifulSoup(page.content, "html.parser")
-        results = soup.find("div", id="fullcredits_content")
-        directors_writers = results.find_all(
-            "table", class_="simpleTable simpleCreditsTable"
-        )
-        cast = results.find("table", class_="cast_list")
+    def get_basic_data(self):  # Saves the basic film data into a DB
+        DBConnector().clear_table()
 
-        data = []
-        data.append(directors_writers[0])
-        data.append(directors_writers[1])
-        data.append(cast)
+        data = self.scrape_top_250()
+        for d in data:
+            title = d.find("td", class_="titleColumn")
+            title = title.find("a")
+            title = re.sub("<.*?>", "", str(title))
 
-        return data
+            film_id = d.find("td", class_="watchlistColumn")
+            film_id = film_id.find("div")
+            film_id = film_id["data-tconst"]
 
-    def get_additional_data(self, film_id):
-        # Scrapes the runtime, and the countries of the selected film
-        url = "https://www.imdb.com/title/%s/reference" % (film_id)
-        page = requests.get(url)
-        soup = BeautifulSoup(page.content, "html.parser")
-        results = soup.find(
-            "section", class_="titlereference-section-additional-details"
-        )
-        results = results.find_all("tr")
+            year = d.find("span", class_="secondaryInfo")
+            year = re.sub("<.*?>", "", str(year)).replace("(", "").replace(")", "")
 
-        data = []
-        for res in results:
-            data.append(res)
+            director = d.find("td", class_="titleColumn")
+            director = director.find("a")
+            director = director["title"]
+            director, *cast = director.split(", ")
+            director = director.replace(" (dir.)", "")
 
-        runtime = data[1]
-        runtime = re.sub("<.*?>", "", str(runtime))
-        runtime = (
-            runtime.replace(" ", "")
-            .replace("Runtime", "")
-            .replace("\n", "")
-            .replace("min", " min")
-        )
+            rating = d.find("td", class_="ratingColumn imdbRating")
+            rating = rating.find("strong")
+            rating = re.sub("<.*?>", "", str(rating))
 
-        country = ""
-        if "Country" in str(data[2]):
-            country = data[2].find_all("a")
-            country = re.sub("<.*?>", "", str(country))
-        elif "Country" in str(data[3]):
-            country = data[3].find_all("a")
-            country = re.sub("<.*?>", "", str(country))
+            poster = d.find("td", class_="posterColumn")
+            poster = poster.find("img")["src"]
+            poster = re.sub("@.+", "@._V1_FMjpg_UY474_.jpg", poster)
 
-        country = country.replace("[", "").replace("]", "")
+            DBConnector().populate_table(
+                (title, film_id, year, director, ", ".join(cast), rating, poster)
+            )
 
-        return (runtime, country)
-
-    def get_full_film_data(self, film_id):
+    def get_crew(self, film_id):
         # Gets the directors, writers, and full cast. Saves them into a dictionary.
-        data = self.scrape_film(film_id)
+        data = self.scrape_crew(film_id)
 
         film = {}
 
@@ -105,7 +86,87 @@ class FilmScraper:
 
         return film
 
-    def scrape_film_list(self):  # Scrapes the Top 250 film list
+    def scrape_crew(self, film_id):
+        # Scrapes the directors, and the writers of the selected film
+        url = "https://www.imdb.com/title/%s/fullcredits" % (film_id)
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, "html.parser")
+        results = soup.find("div", id="fullcredits_content")
+        directors_writers = results.find_all(
+            "table", class_="simpleTable simpleCreditsTable"
+        )
+        cast = results.find("table", class_="cast_list")
+
+        data = []
+        data.append(directors_writers[0])
+        data.append(directors_writers[1])
+        data.append(cast)
+
+        return data
+
+    def scrape_technical_data(self, film_id):
+        # Scrapes the runtime, and the countries of the selected film
+        url = "https://www.imdb.com/title/%s/reference" % (film_id)
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, "html.parser")
+        results = soup.find(
+            "section", class_="titlereference-section-additional-details"
+        )
+        results = results.find_all("tr")
+
+        data = []
+        for res in results:
+            data.append(res)
+
+        runtime = data[1]
+        runtime = re.sub("<.*?>", "", str(runtime))
+        runtime = (
+            runtime.replace(" ", "")
+            .replace("Runtime", "")
+            .replace("\n", "")
+            .replace("min", " min")
+        )
+
+        country = ""
+        languages = []
+        color = ""
+        social = {}
+        if "Country</td>" in str(data[2]):
+            country = data[2].find_all("a")
+            country = re.sub("<.*?>", "", str(country))
+
+            languages = data[3].find_all("a")
+            languages = re.sub("<.*?>", "", str(languages))
+
+            color = data[4].find_all("a")
+            color = re.sub("<.*?>", "", str(color))
+        elif "Country</td>" in str(data[3]):
+            sites = data[2].find_all("a")
+            for site in sites:
+                key = (
+                    re.sub("<.*?>", "", str(site))
+                    .replace("\n", "")
+                    .replace("    ", "")
+                    .replace("                                ", "")
+                )
+                social[key] = site["href"]
+
+            country = data[3].find_all("a")
+            country = re.sub("<.*?>", "", str(country))
+
+            languages = data[4].find_all("a")
+            languages = re.sub("<.*?>", "", str(languages))
+
+            color = data[5].find_all("a")
+            color = re.sub("<.*?>", "", str(color))
+
+        country = country.replace("[", "").replace("]", "")
+        languages = languages.replace("[", "").replace("]", "")
+        color = color.replace("[", "").replace("]", "")
+
+        return (runtime, country, languages, color, social)
+
+    def scrape_top_250(self):  # Scrapes the Top 250 film list
         url = "http://www.imdb.com/chart/top"
         page = requests.get(url)
         soup = BeautifulSoup(page.content, "html.parser")
@@ -118,40 +179,6 @@ class FilmScraper:
             film_list.append(film)
 
         return film_list
-
-    def get_basic_film_data(self):  # Saves the basic film data into a DB
-        DBConnector().clear_table()
-
-        data = self.scrape_film_list()
-        for d in data:
-            title = d.find("td", class_="titleColumn")
-            title = title.find("a")
-            title = re.sub("<.*?>", "", str(title))
-
-            film_id = d.find("td", class_="watchlistColumn")
-            film_id = film_id.find("div")
-            film_id = film_id["data-tconst"]
-
-            year = d.find("span", class_="secondaryInfo")
-            year = re.sub("<.*?>", "", str(year)).replace("(", "").replace(")", "")
-
-            director = d.find("td", class_="titleColumn")
-            director = director.find("a")
-            director = director["title"]
-            director, *cast = director.split(", ")
-            director = director.replace(" (dir.)", "")
-
-            rating = d.find("td", class_="ratingColumn imdbRating")
-            rating = rating.find("strong")
-            rating = re.sub("<.*?>", "", str(rating))
-
-            poster = d.find("td", class_="posterColumn")
-            poster = poster.find("img")["src"]
-            poster = re.sub("@.+", "@._V1_FMjpg_UY474_.jpg", poster)
-
-            DBConnector().populate_table(
-                (title, film_id, year, director, ", ".join(cast), rating, poster)
-            )
 
 
 def get_country_image_name(country):  # Returns the country flag image name
