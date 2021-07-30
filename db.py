@@ -6,7 +6,7 @@ class DBConnector:
         return mysql.connector.connect(
             host="localhost",
             user="root",
-            password="R+D@11",
+            password="",
             database=database,
             auth_plugin="mysql_native_password",
         )
