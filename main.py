@@ -2,6 +2,7 @@ import os
 import re
 import tkinter as tk
 from tkinter import PhotoImage, font
+from tkinter.constants import ANCHOR
 import webbrowser
 from PIL import Image, ImageTk
 from tkinter import ttk
@@ -135,7 +136,7 @@ class IMDbScraper:
         films = DBConnector().read_table()
 
         for i, film in enumerate(films):
-            self.lbx_results.insert(i, film[0])
+            self.lbx_results.insert(i, " %i. %s" % (i + 1, film[0]))
 
     def win_film(self, id):
         """
@@ -260,6 +261,7 @@ class FilmWindow(tk.Toplevel):
         self.lbl_runtime.grid(row=6, column=1, padx=5, pady=5, sticky=tk.NSEW)
 
         self.show_poster()
+        self.show_rating()
         self.show_full_data()
         self.bindings()
 
@@ -384,11 +386,13 @@ class FilmWindow(tk.Toplevel):
             self.poster = scraper.WebImage(self.url).get()
             self.poster_available()
 
-        self.show_rating()
-
     def show_rating(self):
+        # self.img = PhotoImage(file="%sicons/imdb.png" % (STATIC_ROOT))
+        im = Image.open("%sicons/imdb.png" % (STATIC_ROOT)).resize((64, 64))
+        self.img = ImageTk.PhotoImage(im)
+        self.cnv_poster.create_image(135, 541, anchor=tk.CENTER, image=self.img)
         self.cnv_poster.create_text(
-            255,
+            290,
             530,
             text="Rating: %s" % (self.rating),
             anchor=tk.NE,
@@ -414,36 +418,29 @@ class FilmWindow(tk.Toplevel):
             j = 0
             for key, value in social.items():
                 lbl_social = tk.Label(
-                    self.frm_social,
-                    fg="blue",
-                    anchor=tk.W,
+                    self.frm_social, fg="blue", anchor=tk.W, cursor="hand2"
                 )
                 lbl_social.grid(row=i, column=j, padx=5, pady=5, sticky=tk.NSEW)
                 lbl_social.bind("<Button-1>", eval_link(value))
 
                 self.social_icon = None
 
-                site = get_social_media(key)
+                file_name = get_social_media_file_name(key)
+                text = get_social_media_text(key)
 
-                title = ""
-                if len(key) > 20:
-                    title = key[:5] + re.sub(".+", " ... ", key[5:-6]) + key[-6:]
-                else:
-                    title = key
-
-                if site:
-                    img = Image.open("%sicons/%s.png" % (STATIC_ROOT, site)).resize(
-                        (16, 16)
-                    )
+                if file_name:
+                    img = Image.open(
+                        "%sicons/%s.png" % (STATIC_ROOT, file_name)
+                    ).resize((16, 16))
                     self.social_icon = ImageTk.PhotoImage(img)
 
-                    lbl_social["text"] = " " + title
+                    lbl_social["text"] = " " + text
                     lbl_social["compound"] = tk.LEFT
                     lbl_social["image"] = self.social_icon
                     lbl_social.image = self.social_icon
 
                 else:
-                    lbl_social["text"] = title
+                    lbl_social["text"] = text
 
                 i += 1
 
@@ -486,16 +483,35 @@ class FilmWindow(tk.Toplevel):
         listbox.unbind_all("<MouseWheel>")
 
 
-def get_social_media(site):
+def get_social_media_file_name(site):
     social = ""
     if "Facebook" in site.title():
         social = "facebook"
     elif "Instagram" in site.title():
         social = "instagram"
+    elif "Tumblr" in site.title():
+        social = "tumblr"
     elif "Twitter" in site.title():
         social = "twitter"
+    elif "Youtube" in site.title():
+        social = "youtube"
 
     return social
+
+
+def get_social_media_text(site):
+    text = ""
+    if site.title() != "Official Site":
+        text = site.replace("Official ", "")
+    else:
+        text = site
+
+    if len(text) > 20:
+        text = site[:14] + "..."
+    else:
+        text = text
+
+    return text
 
 
 def open_browser(url):
