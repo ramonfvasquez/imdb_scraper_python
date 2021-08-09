@@ -251,8 +251,8 @@ class FilmWindow(tk.Toplevel):
         tk.Label(
             self.frm_technical_details, text="Color:", font="Default 10 bold"
         ).grid(row=5, column=0, padx=5, pady=5, sticky=tk.NE)
-        self.lbl_color = tk.Label(self.frm_technical_details, width=80, anchor=tk.W)
-        self.lbl_color.grid(row=5, column=1, padx=5, pady=5, sticky=tk.NSEW)
+        self.lbl_color = tk.Label(self.frm_technical_details, anchor=tk.W)
+        self.lbl_color.grid(row=5, column=1, padx=5, pady=5, sticky=tk.W)
 
         tk.Label(
             self.frm_technical_details, text="Runtime:", font="Default 10 bold"
@@ -344,10 +344,12 @@ class FilmWindow(tk.Toplevel):
     def show_full_data(self):  # Shows the scraped data of the selected film
         data = scraper.FilmScraper().get_crew(self.film_id)
 
-        self.lbl_director["text"] = ", ".join(sorted(data["director"]))  # Directors
+        director = data["director"]
+
+        self.lbl_director["text"] = ", ".join(sorted(director))  # Directors
 
         writers = data["writers"]  # Writers
-        self.show_writers(writers)
+        self.show_writers(writers, director)
 
         cast = data["cast"]  # Full cast
         self.show_actors(cast)
@@ -369,6 +371,10 @@ class FilmWindow(tk.Toplevel):
         self.lbl_language["text"] = ", ".join(sorted(languages.split(", ")))
 
         self.lbl_color["text"] = color  # Color
+        if "Black" in color.capitalize():
+            self.lbl_color.config(bg="black", fg="white")
+        elif "Color" in color.capitalize():
+            self.lbl_color["fg"] = "red"
 
         self.lbl_runtime["text"] = runtime  # Runtime
 
@@ -458,9 +464,16 @@ class FilmWindow(tk.Toplevel):
                     i = 0
                     j += 1
 
-    def show_writers(self, writers):  # Shows the writers in a treeview
+    def show_writers(self, writers, directors):  # Shows the writers in a treeview
         for i, writer in enumerate(writers):
-            self.tree_writers.insert(parent="", index=i, iid=i, values=(writer,))
+            self.tree_writers.insert(
+                parent="",
+                index=i,
+                iid=i,
+                values=(writer,),
+                tags=("writer",) if writer in directors else "",
+            )
+        self.tree_writers.tag_configure("writer", font="Default 10 bold")
 
     def _bound_to_mousewheel(self, event, listbox):  # Binds widgets to the mousewheel
         # On Linux
