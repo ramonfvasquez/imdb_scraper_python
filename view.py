@@ -24,10 +24,22 @@ class MainWindow:
 
         self.lbx_films = Listbox(self.frm_films, width=70, height=30)
         self.lbx_films.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.lbx_films.bind(
+            "<<ListboxSelect>>",
+            lambda _: self.show_film_data(self.lbx_films.curselection()[0] + 1)
+            if self.lbx_films.curselection()
+            else "",
+        )
+        self.lbx_films.bind(
+            "<Double-1>",
+            lambda _: self.win_film(self.lbx_films.curselection()[0] + 1),
+        )
+
         self.listbox_scroll = Scrollbar(
             self.frm_films, orient="vertical", command=self.lbx_films.yview
         )
         self.listbox_scroll.grid(row=0, column=0, pady=5, sticky="nse")
+
         self.lbx_films.configure(yscrollcommand=self.listbox_scroll.set)
 
         text1 = "Double click on a film title for further information."
@@ -43,6 +55,10 @@ class MainWindow:
         )
         self.lbl_title = Label(self.frm_film_info, width=60, anchor="w")
         self.lbl_title.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        self.lbl_title.bind(
+            "<Double-1>",
+            lambda _: self.win_film(self.lbx_films.curselection()[0] + 1),
+        )
 
         Label(self.frm_film_info, text="Year:", font="Default 10 bold").grid(
             row=1, column=0, padx=5, pady=5, sticky="e"
@@ -73,35 +89,16 @@ class MainWindow:
             self.container, text=text2, state="disabled", font="Default 8", anchor="w"
         )
         self.lbl_info.grid(row=3, column=0, padx=20, pady=10, sticky="nsew")
-
-        FilmList().get_basic_data()
-        self.bindings()
-        self.show_films()
-        self.set_default_item()
-
-    def bindings(self):  # Sets the bindings for the widgets
-        self.lbx_films.bind(
-            "<<ListboxSelect>>",
-            lambda _: self.show_film_data(self.lbx_films.curselection()[0] + 1)
-            if self.lbx_films.curselection()
-            else "",
-        )
-        self.lbx_films.bind(
-            "<Double-1>",
-            lambda _: self.win_film(self.lbx_films.curselection()[0] + 1),
-        )
-
-        self.lbl_title.bind(
-            "<Double-1>",
-            lambda _: self.win_film(self.lbx_films.curselection()[0] + 1),
-        )
-
         self.lbl_info.bind(
             "<Button-1>",
             lambda _: open_browser(
                 "https://github.com/ramonfvasquez/imdb_scraper_python"
             ),
         )
+
+        FilmList().get_basic_data()
+        self.show_films()
+        self.set_default_item()
 
     def set_default_item(self):  # Selects the first element of the film listbox
         self.lbx_films.selection_set(0)
@@ -165,6 +162,12 @@ class FilmWindow(Toplevel):
 
         self.cnv_poster = Canvas(self.frm_data, width=400, height=570, bg="black")
         self.cnv_poster.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.cnv_poster.bind(
+            "<Button-1>",
+            lambda event: open_browser(
+                "https://www.imdb.com/title/%s/reference" % (self.film_id)
+            ),
+        )
 
         # CAST & CREW
 
@@ -185,14 +188,22 @@ class FilmWindow(Toplevel):
         self.tree_writers = Treeview(self.frm_cast_and_crew, show="tree", height=4)
         self.tree_writers.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
         self.tree_writers["columns"] = ["writer"]
-
         self.tree_writers.column("#0", width=0, stretch="no")
         self.tree_writers.column("writer", anchor="nw", width=750, stretch="no")
+        self.tree_writers.bindtags((self.tree_writers, self.frm_cast_and_crew, "all"))
+        self.tree_writers.bind(
+            "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_writers)
+        )
+        self.tree_writers.bind(
+            "<Leave>",
+            lambda event: self._unbound_to_mousewheel(event, self.tree_writers),
+        )
 
         self.writers_scroll = Scrollbar(
             self.frm_cast_and_crew, orient="vertical", command=self.tree_writers.yview
         )
         self.writers_scroll.grid(row=1, column=1, pady=5, sticky="nse")
+
         self.tree_writers.configure(yscrollcommand=self.writers_scroll.set)
 
         Label(self.frm_cast_and_crew, text="Cast:", font="Default 10 bold").grid(
@@ -201,19 +212,25 @@ class FilmWindow(Toplevel):
         self.tree_cast = Treeview(self.frm_cast_and_crew, height=20)
         self.tree_cast.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
         self.tree_cast["columns"] = ["actor", "character"]
-
         self.tree_cast.column("#0", width=0, stretch="no")
         self.tree_cast.column("actor", anchor="nw", width=250, stretch="no")
         self.tree_cast.column("character", anchor="nw", width=500, stretch="no")
-
         self.tree_cast.heading("#0", text="", anchor="center")
         self.tree_cast.heading("actor", text="Actor", anchor="center")
         self.tree_cast.heading("character", text="Character", anchor="center")
+        self.tree_cast.bindtags((self.tree_cast, self.frm_cast_and_crew, "all"))
+        self.tree_cast.bind(
+            "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_cast)
+        )
+        self.tree_cast.bind(
+            "<Leave>", lambda event: self._unbound_to_mousewheel(event, self.tree_cast)
+        )
 
         self.cast_scroll = Scrollbar(
             self.frm_cast_and_crew, orient="vertical", command=self.tree_cast.yview
         )
         self.cast_scroll.grid(row=2, column=1, pady=5, sticky="nse")
+
         self.tree_cast.configure(yscrollcommand=self.cast_scroll.set)
 
         # TECHNICAL DETAILS
@@ -251,31 +268,6 @@ class FilmWindow(Toplevel):
         self.show_poster()
         self.show_rating()
         self.show_full_data()
-        self.bindings()
-
-    def bindings(self):  # Sets the bindings for the widgets
-        self.cnv_poster.bind(
-            "<Button-1>",
-            lambda event: open_browser(
-                "https://www.imdb.com/title/%s/reference" % (self.film_id)
-            ),
-        )
-
-        self.tree_writers.bindtags((self.tree_writers, self.frm_cast_and_crew, "all"))
-        self.tree_writers.bind(
-            "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_writers)
-        )
-        self.tree_writers.bind(
-            "<Leave>",
-            lambda event: self._unbound_to_mousewheel(event, self.tree_writers),
-        )
-        self.tree_cast.bindtags((self.tree_cast, self.frm_cast_and_crew, "all"))
-        self.tree_cast.bind(
-            "<Enter>", lambda event: self._bound_to_mousewheel(event, self.tree_cast)
-        )
-        self.tree_cast.bind(
-            "<Leave>", lambda event: self._unbound_to_mousewheel(event, self.tree_cast)
-        )
 
     def open_map(self, country):
         open_browser("https://www.google.com/maps/place/%s" % (country))
@@ -397,11 +389,23 @@ class FilmWindow(Toplevel):
                 # If the poster is too little, shows a message instead of the poster
                 self.poster_available()
             else:
-                self.poster_unavailable()
-        except:
+                raise ImageSizeError
+
+            if not self.poster:
+                raise urllib.error.HTTPError
+        except ImageSizeError as err1:
+            self.poster_unavailable()
+
+            print("ImageSizeError %s: %s" % (err1.errno, str(err1)))
+        except urllib.error.HTTPError as err2:
             self.url = re.sub("@.*", "@@._V1_FMjpg_UY473_.jpg", self.url)
             self.poster = WebImage(self.url).get()
+
             self.poster_available()
+
+            print(
+                "%s - The URL does not exist. A new URL has been created." % (str(err2))
+            )
 
     def show_rating(self):
         im = Image.open("%sicons/imdb.png" % (STATIC_ROOT)).resize((64, 64))
@@ -505,6 +509,13 @@ class FilmWindow(Toplevel):
 
         # On Windows
         listbox.unbind_all("<MouseWheel>")
+
+
+class ImageSizeError(Exception):
+    errno = 123456789
+
+    def __str__(self):
+        return "The image is too little."
 
 
 def open_browser(url):

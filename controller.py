@@ -9,11 +9,7 @@ class IMDbScraper:
         MainWindow(self.root)
 
 
-def main():
+if __name__ == "__main__":
     root = Tk()
     app = IMDbScraper(root)
     root.mainloop()
-
-
-if __name__ == "__main__":
-    main()

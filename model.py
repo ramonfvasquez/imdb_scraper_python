@@ -5,20 +5,29 @@ import requests
 import urllib.request
 from bs4 import BeautifulSoup
 from PIL import Image, ImageTk
+from tkinter import messagebox
 
 
 class DataBase:
     def connection(self, database=None):
-        return mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database=database,
-            auth_plugin="mysql_native_password",
-        )
+        try:
+            return mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="R+D@11",
+                database=database,
+                auth_plugin="mysql_native_password",
+            )
+        except mysql.connector.Error as err:
+            messagebox.showerror(
+                "MySQL Connection Error",
+                "Oops! Something went wrong!\n\n%s" % err,
+            )
+            exit()
 
     def create_db(self):
         db = self.connection()
+
         try:
             cur = db.cursor()
             sql = "CREATE DATABASE imdb;"
@@ -31,6 +40,7 @@ class DataBase:
 
     def create_table(self):
         db = self.connection(database="imdb")
+
         try:
             cur = db.cursor()
             sql = """
@@ -60,7 +70,7 @@ class DataBase:
             cur.execute(sql, data)
             db.commit()
         except:
-            print("An error occured while saving the data!")
+            print("An error occurred when saving the data!")
 
         db.close()
 
