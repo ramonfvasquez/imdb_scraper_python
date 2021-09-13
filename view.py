@@ -1,3 +1,8 @@
+"""View module for the program's MVC pattern.
+
+Classes included: MainWindow, FilmWindow, and ImageSizeError (exception).
+"""
+
 import os
 import webbrowser
 from PIL import Image, ImageTk
@@ -11,6 +16,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 
 class MainWindow:
+    """Main window of the program.
+
+    It has a a frame with a listbox in which the top-250 films are inserted, and
+    a second frame that shows the basic data of the selected film, i.e title,
+    year, stars, and rating.
+    """
+
     def __init__(self, root):
         self.root = root
         self.root.resizable(False, False)
@@ -100,15 +112,18 @@ class MainWindow:
         self.show_films()
         self.set_default_item()
 
-    def set_default_item(self):  # Selects the first element of the film listbox
+    def set_default_item(self):
+        """Select the first element of the film listbox."""
+
         self.lbx_films.selection_set(0)
         self.lbx_films.event_generate("<<ListboxSelect>>")
 
     def show_film_data(self, id):
         """
-        Shows the basic data of the selected film in the frame below
-        the film listbox.
+        Show the basic data of the selected film in the frame below the film
+        listbox.
         """
+
         data = DataBase().search(id)[0]
 
         self.lbl_title["text"] = data[1]  # Film title
@@ -117,7 +132,9 @@ class MainWindow:
         self.lbl_stars["text"] = data[5]  # Stars
         self.lbl_rating["text"] = data[6]  # IMDb Rating
 
-    def show_films(self):  # Shows the scraped films in the film listbox
+    def show_films(self):
+        """Show the scraped films in the film listbox."""
+
         self.lbx_films.delete(0, "end")
         films = DataBase().read_table()
 
@@ -126,9 +143,10 @@ class MainWindow:
 
     def win_film(self, id):
         """
-        Opens the full film data window. The main window is disabled while the
+        Open the full-film-data window. The main window is disabled while the
         film window is open.
         """
+
         win = FilmWindow(id, master=self.root)
         win.transient(self.root)
         try:
@@ -139,6 +157,15 @@ class MainWindow:
 
 
 class FilmWindow(Toplevel):
+    """Shows full film's data.
+
+    It has a canvas for the poster and three frames:
+        -cast and crew;
+        -social media links (it is only created if the film has any; if not, this
+        frame will not appear);
+        -technical data (countries, languages, color, and runtime).
+    """
+
     def __init__(self, id, master=None):
         Toplevel.__init__(self, master=master)
         self.data = DataBase().search(id)[0]
@@ -159,7 +186,6 @@ class FilmWindow(Toplevel):
         self.frm_data.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # POSTER
-
         self.cnv_poster = Canvas(self.frm_data, width=400, height=570, bg="black")
         self.cnv_poster.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.cnv_poster.bind(
@@ -170,7 +196,6 @@ class FilmWindow(Toplevel):
         )
 
         # CAST & CREW
-
         self.frm_cast_and_crew = LabelFrame(self.frm_data, text="Cast & Crew")
         self.frm_cast_and_crew.grid(
             row=0, column=1, padx=10, pady=10, ipadx=5, ipady=5, sticky="nsew"
@@ -234,7 +259,6 @@ class FilmWindow(Toplevel):
         self.tree_cast.configure(yscrollcommand=self.cast_scroll.set)
 
         # TECHNICAL DETAILS
-
         self.frm_technical_details = LabelFrame(self.frm_data, text="Technical Details")
         self.frm_technical_details.grid(
             row=1, column=1, padx=10, pady=10, ipadx=5, ipady=5, sticky="nsew"
@@ -270,15 +294,26 @@ class FilmWindow(Toplevel):
         self.show_full_data()
 
     def open_map(self, country):
+        """Show the selected country in Google Maps (if the country exists)."""
+
         open_browser("https://www.google.com/maps/place/%s" % (country))
 
     def open_wikipedia(self, country):
+        """
+        Show the selected country in Wikipedia (when the country does not
+        exist).
+        """
+
         open_browser("https://en.wikipedia.org/wiki/%s" % (country))
 
-    def poster_available(self):  # Creates the film poster
+    def poster_available(self):
+        """Create the film poster."""
+
         self.cnv_poster.create_image(200, 265, anchor="center", image=self.poster)
 
-    def poster_unavailable(self):  # Creates a message for unavailable posters
+    def poster_unavailable(self):
+        """Create a message for unavailable posters."""
+
         unavailable = "Oh, no! The poster is not available! :("
 
         self.cnv_poster.create_text(
@@ -290,7 +325,9 @@ class FilmWindow(Toplevel):
             fill="red",
         )
 
-    def show_actors(self, cast):  # Shows the full cast in a treeview
+    def show_actors(self, cast):
+        """Show the full cast in a treeview."""
+
         i = 0
         for actor, character in cast.items():
             self.tree_cast.insert(
@@ -301,10 +338,13 @@ class FilmWindow(Toplevel):
                 tags=("star",) if actor in self.stars else "",
             )
             i += 1
-        # Bolds the names of the stars
+
+        # Bold the names of the stars
         self.tree_cast.tag_configure("star", font="Default 10 bold")
 
     def show_flags(self, countries):
+        """Show a flag next to each country name."""
+
         eval_map = lambda x: (lambda p: self.open_map(x))
         eval_wiki = lambda x: (lambda p: self.open_wikipedia(x))
         for i, country in enumerate(countries):
@@ -333,7 +373,9 @@ class FilmWindow(Toplevel):
                 eval_map(country) if self.flag else eval_wiki(country),
             )
 
-    def show_full_data(self):  # Shows the scraped data of the selected film
+    def show_full_data(self):
+        """Show the scraped data of the selected film."""
+
         data = self.film.get_crew()
 
         # Directors
@@ -377,16 +419,19 @@ class FilmWindow(Toplevel):
         self.lbl_runtime["text"] = runtime
 
     def show_poster(self):
+        """Show the poster in the canvas."""
+
         text = "Click on the poster to access the film's IMDb page."
         self.cnv_poster.create_text(
             333, 10, text=text, anchor="ne", font="Default 8", fill="white"
         )
 
-        # Shows the film poster if available, if not, shows a message
+        # Show the film poster if available; if not, show a message
         try:
             self.poster = WebImage(self.url).get()
             if self.poster.width() > 100 and self.poster.height() > 100:
-                # If the poster is too little, shows a message instead of the poster
+
+                # If the poster is too little, show a message instead of the poster
                 self.poster_available()
             else:
                 raise ImageSizeError
@@ -408,6 +453,8 @@ class FilmWindow(Toplevel):
             )
 
     def show_rating(self):
+        """Show the rating in the canvas."""
+
         im = Image.open("%sicons/imdb.png" % (STATIC_ROOT)).resize((64, 64))
         self.img = ImageTk.PhotoImage(im)
         self.cnv_poster.create_image(135, 541, anchor="center", image=self.img)
@@ -423,11 +470,13 @@ class FilmWindow(Toplevel):
 
     def show_social_media(self, social):
         """
-        If the selected film has social media, inserts a frame, and within it
-        some labels depending on the number of sites. For every multiple of 4,
-        the new labels are placed in a new column. Binds each label with a link
-        to its corresponding URL.
+        If the selected film has social media, insert a frame, and within it
+        some labels depending on the number of sites.
+
+        For every multiple of 4, the new labels are placed in a new column. Bind
+        each label with a link to its corresponding URL.
         """
+
         if social:
             self.frm_social = LabelFrame(self.frm_data, text="Social Media")
             self.frm_social.grid(
@@ -469,7 +518,9 @@ class FilmWindow(Toplevel):
                     i = 0
                     j += 1
 
-    def show_writers(self, writers, directors):  # Shows the writers in a treeview
+    def show_writers(self, writers, directors):
+        """Show the writers in a treeview."""
+
         for i, writer in enumerate(writers):
             self.tree_writers.insert(
                 parent="",
@@ -480,7 +531,9 @@ class FilmWindow(Toplevel):
             )
         self.tree_writers.tag_configure("writer", font="Default 10 bold")
 
-    def _bound_to_mousewheel(self, event, listbox):  # Binds widgets to the mousewheel
+    def _bound_to_mousewheel(self, event, listbox):
+        """Bind widgets to the mousewheel."""
+
         # On Linux
         listbox.bind_all(
             "<Button-4>", lambda event: self._on_mousewheel_down(event, listbox)
@@ -494,14 +547,18 @@ class FilmWindow(Toplevel):
             "<MouseWheel>", lambda event: self._on_mousewheel_up(event, listbox)
         )
 
-    def _on_mousewheel_down(self, event, listbox):  # Mousewheel scrolling down
+    def _on_mousewheel_down(self, event, listbox):
+        """Mousewheel scrolling down."""
+
         listbox.yview_scroll(-1, "units")
 
-    def _on_mousewheel_up(self, event, listbox):  # Mousewheel scrolling up
+    def _on_mousewheel_up(self, event, listbox):
+        """Mousewheel scrolling up."""
+
         listbox.yview_scroll(1, "units")
 
     def _unbound_to_mousewheel(self, event, listbox):
-        # Unbinds widgets from the mousewheel
+        """Unbind widgets from the mousewheel."""
 
         # On Linux
         listbox.unbind_all("<Button-4>")
@@ -512,6 +569,8 @@ class FilmWindow(Toplevel):
 
 
 class ImageSizeError(Exception):
+    """Custom exception for when a poster image's width is below 100 pixels."""
+
     errno = 123456789
 
     def __str__(self):
@@ -519,4 +578,6 @@ class ImageSizeError(Exception):
 
 
 def open_browser(url):
+    """Open the default web browser."""
+
     webbrowser.open(url)

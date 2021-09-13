@@ -1,3 +1,8 @@
+"""Model module for the program's MVC pattern.
+
+Classes included: DataBase, Film, FilmList, Scraper, and WebImage.
+"""
+
 import io
 import mysql.connector
 import re
@@ -9,7 +14,19 @@ from tkinter import messagebox
 
 
 class DataBase:
+    """Manages the DB CRUD.
+
+    Each method performs an individual action to interact with the DB. The DB
+    is based on MySQL.
+    """
+
     def connection(self, database=None):
+        """Connect the program to the DB.
+
+        database is defaulted to None to permit the first connection to MySQL
+        so as to create the scheme.
+        """
+
         try:
             return mysql.connector.connect(
                 host="localhost",
@@ -26,6 +43,8 @@ class DataBase:
             exit()
 
     def create_db(self):
+        """Create the DB."""
+
         db = self.connection()
 
         try:
@@ -39,6 +58,8 @@ class DataBase:
         db.close()
 
     def create_table(self):
+        """Create the table to save the temporary data."""
+
         db = self.connection(database="imdb")
 
         try:
@@ -59,6 +80,8 @@ class DataBase:
         db.close()
 
     def populate_table(self, data):
+        """Fill the table with the initial scraping data."""
+
         db = self.connection(database="imdb")
 
         try:
@@ -75,6 +98,8 @@ class DataBase:
         db.close()
 
     def read_table(self):
+        """Read the table to get the film's title."""
+
         db = self.connection(database="imdb")
 
         try:
@@ -88,6 +113,8 @@ class DataBase:
         db.close()
 
     def search(self, id):
+        """Get all the film's basic info when a film is selected."""
+
         db = self.connection("imdb")
 
         try:
@@ -101,6 +128,8 @@ class DataBase:
         db.close()
 
     def clear_table(self):
+        """Clear the table before saving the updated initial data."""
+
         db = self.connection(database="imdb")
 
         try:
@@ -114,12 +143,153 @@ class DataBase:
         db.close()
 
 
+class Film:
+    """Gathers the full data of the selected film."""
+
+    def __init__(self, film_id):
+        self.film_id = film_id
+
+    def get_crew(self):
+        """Get the directors, writers, and full cast. Save them into a dictionary."""
+
+        url = "https://www.imdb.com/title/%s/fullcredits" % (self.film_id)
+        scraper = Scraper(url)
+
+        data = scraper.scrape_crew()
+
+        crew = {}
+
+        directors = data[0].find_all("a")
+        directors = re.sub("<.*?>", "", str(directors))
+        directors = directors.replace("[", "").replace("]", "").replace("\n", "")
+        directors = directors.split(",  ")
+        directors[0] = re.sub("^[ ]", "", directors[0])
+        crew["directors"] = sorted(set(directors))
+
+        writers = data[1].find_all("a")
+        writers = re.sub("<.*?>", "", str(writers))
+        writers = writers.replace("[", "").replace("]", "").replace("\n", "")
+        writers = writers.split(",  ")
+        writers[0] = re.sub("^[ ]", "", writers[0])
+        crew["writers"] = sorted(set(writers))
+
+        actors = data[2].find_all("tr")
+        actors = re.sub("<.*?>", "", str(actors)).replace("  ", "").replace("\n", "")
+        actors = actors.replace("\n", "").replace("[", "").replace("]", "")
+        actors = actors.split(",   ")
+        actors.remove(actors[0])
+
+        cast = {}
+        for actor in actors:
+            actor = actor.split(" ...")
+            if len(actor) == 1:
+                actor.append("")
+
+            actor[0] = actor[0].replace(", Rest of cast listed alphabetically:", "")
+            actor[1] = actor[1].replace(", Rest of cast listed alphabetically:", "")
+
+            cast[actor[0]] = actor[1].replace(" /", " / ")
+
+        crew["cast"] = cast
+
+        return crew
+
+    def get_technical_details(self):
+        """Get the countries, runtime, color, and languages of the film."""
+
+        url = "https://www.imdb.com/title/%s/reference" % (self.film_id)
+        return Scraper(url).scrape_technical_data()
+
+    def get_social_media_file_name(self, site):
+        """Get the social media links of the film."""
+
+        social = ""
+        if "Facebook" in site.title():
+            social = "facebook"
+        elif "Instagram" in site.title():
+            social = "instagram"
+        elif "Tumblr" in site.title():
+            social = "tumblr"
+        elif "Twitter" in site.title():
+            social = "twitter"
+        elif "Youtube" in site.title():
+            social = "youtube"
+
+        return social
+
+    def get_social_media_text(self, site):
+        """Format the names of the social media links."""
+
+        text = ""
+        if not "Official Site" in site.title():
+            text = site.replace("Official ", "")
+        else:
+            text = site
+
+        if len(text) > 20:
+            text = site[:14] + "..."
+        else:
+            text = text
+
+        return text
+
+
+class FilmList:
+    """IMDB's Top 250 film list."""
+
+    def __init__(self):
+        self.scraper = Scraper("http://www.imdb.com/chart/top")
+
+    def get_basic_data(self):
+        """Get the basic data of the selected film and save it into the DB."""
+
+        db = DataBase().clear_table()
+
+        data = self.scraper.scrape_top_250()
+        for d in data:
+            title = d.find("td", class_="titleColumn")
+            title = title.find("a")
+            title = re.sub("<.*?>", "", str(title))
+
+            film_id = d.find("td", class_="watchlistColumn")
+            film_id = film_id.find("div")
+            film_id = film_id["data-tconst"]
+
+            year = d.find("span", class_="secondaryInfo")
+            year = re.sub("<.*?>", "", str(year)).replace("(", "").replace(")", "")
+
+            director = d.find("td", class_="titleColumn")
+            director = director.find("a")
+            director = director["title"]
+            director, *cast = director.split(", ")
+            director = director.replace(" (dir.)", "")
+
+            rating = d.find("td", class_="ratingColumn imdbRating")
+            rating = rating.find("strong")
+            rating = re.sub("<.*?>", "", str(rating))
+
+            poster = d.find("td", class_="posterColumn")
+            poster = poster.find("img")["src"]
+            poster = re.sub("@.+", "@._V1_FMjpg_UY474_.jpg", poster)
+
+            DataBase().populate_table(
+                (title, film_id, year, director, ", ".join(cast), rating, poster)
+            )
+
+
 class Scraper:
+    """Scrapes the IMDb's Top 250 film list.
+
+    When the program loads, it gets the full film list and all the basic info
+    of each film (title, director, stars, and year), and saves it into the DB.
+    """
+
     def __init__(self, url):
         self.url = url
 
     def scrape_crew(self):
-        # Scrapes the directors, and the writers of the selected film
+        """Scrape the directors, and the writers of the selected film."""
+
         page = requests.get(self.url)
         soup = BeautifulSoup(page.content, "html.parser")
         results = soup.find("div", id="fullcredits_content")
@@ -136,7 +306,8 @@ class Scraper:
         return crew
 
     def scrape_technical_data(self):
-        # Scrapes the runtime, and the countries of the selected film
+        """Scrape the runtime, and the countries of the selected film."""
+
         page = requests.get(self.url)
         soup = BeautifulSoup(page.content, "html.parser")
         results = soup.find(
@@ -196,7 +367,9 @@ class Scraper:
 
         return (runtime, country, languages, color, social)
 
-    def scrape_top_250(self):  # Scrapes the Top 250 film list
+    def scrape_top_250(self):
+        """Scrape the top 250 film list."""
+
         page = requests.get(self.url)
         soup = BeautifulSoup(page.content, "html.parser")
         results = soup.find(class_="lister-list")
@@ -210,128 +383,9 @@ class Scraper:
         return film_list
 
 
-class FilmList:
-    def __init__(self):
-        self.scraper = Scraper("http://www.imdb.com/chart/top")
+class WebImage:
+    """Opens an image based on its URL."""
 
-    def get_basic_data(self):  # Saves the basic film data into a DB
-        db = DataBase().clear_table()
-
-        data = self.scraper.scrape_top_250()
-        for d in data:
-            title = d.find("td", class_="titleColumn")
-            title = title.find("a")
-            title = re.sub("<.*?>", "", str(title))
-
-            film_id = d.find("td", class_="watchlistColumn")
-            film_id = film_id.find("div")
-            film_id = film_id["data-tconst"]
-
-            year = d.find("span", class_="secondaryInfo")
-            year = re.sub("<.*?>", "", str(year)).replace("(", "").replace(")", "")
-
-            director = d.find("td", class_="titleColumn")
-            director = director.find("a")
-            director = director["title"]
-            director, *cast = director.split(", ")
-            director = director.replace(" (dir.)", "")
-
-            rating = d.find("td", class_="ratingColumn imdbRating")
-            rating = rating.find("strong")
-            rating = re.sub("<.*?>", "", str(rating))
-
-            poster = d.find("td", class_="posterColumn")
-            poster = poster.find("img")["src"]
-            poster = re.sub("@.+", "@._V1_FMjpg_UY474_.jpg", poster)
-
-            DataBase().populate_table(
-                (title, film_id, year, director, ", ".join(cast), rating, poster)
-            )
-
-
-class Film:
-    def __init__(self, film_id):
-        self.film_id = film_id
-
-    def get_crew(self):
-        # Gets the directors, writers, and full cast. Saves them into a dictionary.
-        url = "https://www.imdb.com/title/%s/fullcredits" % (self.film_id)
-        scraper = Scraper(url)
-
-        data = scraper.scrape_crew()
-
-        crew = {}
-
-        directors = data[0].find_all("a")
-        directors = re.sub("<.*?>", "", str(directors))
-        directors = directors.replace("[", "").replace("]", "").replace("\n", "")
-        directors = directors.split(",  ")
-        directors[0] = re.sub("^[ ]", "", directors[0])
-        crew["directors"] = sorted(set(directors))
-
-        writers = data[1].find_all("a")
-        writers = re.sub("<.*?>", "", str(writers))
-        writers = writers.replace("[", "").replace("]", "").replace("\n", "")
-        writers = writers.split(",  ")
-        writers[0] = re.sub("^[ ]", "", writers[0])
-        crew["writers"] = sorted(set(writers))
-
-        actors = data[2].find_all("tr")
-        actors = re.sub("<.*?>", "", str(actors)).replace("  ", "").replace("\n", "")
-        actors = actors.replace("\n", "").replace("[", "").replace("]", "")
-        actors = actors.split(",   ")
-        actors.remove(actors[0])
-
-        cast = {}
-        for actor in actors:
-            actor = actor.split(" ...")
-            if len(actor) == 1:
-                actor.append("")
-
-            actor[0] = actor[0].replace(", Rest of cast listed alphabetically:", "")
-            actor[1] = actor[1].replace(", Rest of cast listed alphabetically:", "")
-
-            cast[actor[0]] = actor[1].replace(" /", " / ")
-
-        crew["cast"] = cast
-
-        return crew
-
-    def get_technical_details(self):
-        url = "https://www.imdb.com/title/%s/reference" % (self.film_id)
-        return Scraper(url).scrape_technical_data()
-
-    def get_social_media_file_name(self, site):
-        social = ""
-        if "Facebook" in site.title():
-            social = "facebook"
-        elif "Instagram" in site.title():
-            social = "instagram"
-        elif "Tumblr" in site.title():
-            social = "tumblr"
-        elif "Twitter" in site.title():
-            social = "twitter"
-        elif "Youtube" in site.title():
-            social = "youtube"
-
-        return social
-
-    def get_social_media_text(self, site):
-        text = ""
-        if not "Official Site" in site.title():
-            text = site.replace("Official ", "")
-        else:
-            text = site
-
-        if len(text) > 20:
-            text = site[:14] + "..."
-        else:
-            text = text
-
-        return text
-
-
-class WebImage:  # Opens an image based on its URL
     def __init__(self, url):
         self.connection = urllib.request.urlopen(url)
         self.raw_data = self.connection.read()
@@ -342,6 +396,8 @@ class WebImage:  # Opens an image based on its URL
         return self.image
 
 
-def get_country_image_name(country):  # Returns the country flag image name
+def get_country_image_name(country):
+    """Return the country flag image name."""
+
     country = country.replace(" ", "-").replace(".", "").lower()
     return "%s.png" % (country)

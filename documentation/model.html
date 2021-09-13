@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module model</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+<h1 style="background-color: #7799ee; border-radius: 5px 5px 0 0; color: #f0f0f8; font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 10px 0 0 0; text-align: center;">Ramón Vásquez</h1>
+<h3 style="background-color: #7799ee; color: #f0f0f8; font-family: Arial, Helvetica, sans-serif; margin: 0 0 3px 0; padding: 0 0 10px 0; text-align: center;">Diplomatura Python - Módulo 2 - Proyecto final</h3>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>model</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/hermes/Code/utn/diplomatura_python/modulo_2/imdb_scraper/model.py">/home/hermes/Code/utn/diplomatura_python/modulo_2/imdb_scraper/model.py</a></font></td></tr></table>
+    <p><tt>Model&nbsp;module&nbsp;for&nbsp;the&nbsp;program's&nbsp;MVC&nbsp;pattern.<br>
+&nbsp;<br>
+Classes&nbsp;included:&nbsp;<a href="#DataBase">DataBase</a>,&nbsp;<a href="#Film">Film</a>,&nbsp;<a href="#FilmList">FilmList</a>,&nbsp;<a href="#Scraper">Scraper</a>,&nbsp;and&nbsp;<a href="#WebImage">WebImage</a>.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="PIL.Image.html">PIL.Image</a><br>
+<a href="PIL.ImageTk.html">PIL.ImageTk</a><br>
+</td><td width="25%" valign=top><a href="io.html">io</a><br>
+<a href="tkinter.messagebox.html">tkinter.messagebox</a><br>
+</td><td width="25%" valign=top><a href="mysql.html">mysql</a><br>
+<a href="re.html">re</a><br>
+</td><td width="25%" valign=top><a href="requests.html">requests</a><br>
+<a href="urllib.html">urllib</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="model.html#DataBase">DataBase</a>
+</font></dt><dt><font face="helvetica, arial"><a href="model.html#Film">Film</a>
+</font></dt><dt><font face="helvetica, arial"><a href="model.html#FilmList">FilmList</a>
+</font></dt><dt><font face="helvetica, arial"><a href="model.html#Scraper">Scraper</a>
+</font></dt><dt><font face="helvetica, arial"><a href="model.html#WebImage">WebImage</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DataBase">class <strong>DataBase</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Manages&nbsp;the&nbsp;DB&nbsp;CRUD.<br>
+&nbsp;<br>
+Each&nbsp;method&nbsp;performs&nbsp;an&nbsp;individual&nbsp;action&nbsp;to&nbsp;interact&nbsp;with&nbsp;the&nbsp;DB.&nbsp;The&nbsp;DB<br>
+is&nbsp;based&nbsp;on&nbsp;MySQL.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="DataBase-clear_table"><strong>clear_table</strong></a>(self)</dt><dd><tt>Clear&nbsp;the&nbsp;table&nbsp;before&nbsp;saving&nbsp;the&nbsp;updated&nbsp;initial&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-connection"><strong>connection</strong></a>(self, database=None)</dt><dd><tt>Connect&nbsp;the&nbsp;program&nbsp;to&nbsp;the&nbsp;DB.<br>
+&nbsp;<br>
+database&nbsp;is&nbsp;defaulted&nbsp;to&nbsp;None&nbsp;to&nbsp;permit&nbsp;the&nbsp;first&nbsp;connection&nbsp;to&nbsp;MySQL<br>
+so&nbsp;as&nbsp;to&nbsp;create&nbsp;the&nbsp;scheme.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-create_db"><strong>create_db</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;DB.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-create_table"><strong>create_table</strong></a>(self)</dt><dd><tt>Create&nbsp;the&nbsp;table&nbsp;to&nbsp;save&nbsp;the&nbsp;temporary&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-populate_table"><strong>populate_table</strong></a>(self, data)</dt><dd><tt>Fill&nbsp;the&nbsp;table&nbsp;with&nbsp;the&nbsp;initial&nbsp;scraping&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-read_table"><strong>read_table</strong></a>(self)</dt><dd><tt>Read&nbsp;the&nbsp;table&nbsp;to&nbsp;get&nbsp;the&nbsp;film's&nbsp;title.</tt></dd></dl>
+
+<dl><dt><a name="DataBase-search"><strong>search</strong></a>(self, id)</dt><dd><tt>Get&nbsp;all&nbsp;the&nbsp;film's&nbsp;basic&nbsp;info&nbsp;when&nbsp;a&nbsp;film&nbsp;is&nbsp;selected.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Film">class <strong>Film</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Film">Film</a>(film_id)<br>
+&nbsp;<br>
+Gathers&nbsp;the&nbsp;full&nbsp;data&nbsp;of&nbsp;the&nbsp;selected&nbsp;film.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Film-__init__"><strong>__init__</strong></a>(self, film_id)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="Film-get_crew"><strong>get_crew</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;directors,&nbsp;writers,&nbsp;and&nbsp;full&nbsp;cast.&nbsp;Save&nbsp;them&nbsp;into&nbsp;a&nbsp;dictionary.</tt></dd></dl>
+
+<dl><dt><a name="Film-get_social_media_file_name"><strong>get_social_media_file_name</strong></a>(self, site)</dt><dd><tt>Get&nbsp;the&nbsp;social&nbsp;media&nbsp;links&nbsp;of&nbsp;the&nbsp;film.</tt></dd></dl>
+
+<dl><dt><a name="Film-get_social_media_text"><strong>get_social_media_text</strong></a>(self, site)</dt><dd><tt>Format&nbsp;the&nbsp;names&nbsp;of&nbsp;the&nbsp;social&nbsp;media&nbsp;links.</tt></dd></dl>
+
+<dl><dt><a name="Film-get_technical_details"><strong>get_technical_details</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;countries,&nbsp;runtime,&nbsp;color,&nbsp;and&nbsp;languages&nbsp;of&nbsp;the&nbsp;film.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="FilmList">class <strong>FilmList</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>IMDB's&nbsp;Top&nbsp;250&nbsp;film&nbsp;list.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="FilmList-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="FilmList-get_basic_data"><strong>get_basic_data</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;basic&nbsp;data&nbsp;of&nbsp;the&nbsp;selected&nbsp;film&nbsp;and&nbsp;save&nbsp;it&nbsp;into&nbsp;the&nbsp;DB.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Scraper">class <strong>Scraper</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Scraper">Scraper</a>(url)<br>
+&nbsp;<br>
+Scrapes&nbsp;the&nbsp;IMDb's&nbsp;Top&nbsp;250&nbsp;film&nbsp;list.<br>
+&nbsp;<br>
+When&nbsp;the&nbsp;program&nbsp;loads,&nbsp;it&nbsp;gets&nbsp;the&nbsp;full&nbsp;film&nbsp;list&nbsp;and&nbsp;all&nbsp;the&nbsp;basic&nbsp;info<br>
+of&nbsp;each&nbsp;film&nbsp;(title,&nbsp;director,&nbsp;stars,&nbsp;and&nbsp;year),&nbsp;and&nbsp;saves&nbsp;it&nbsp;into&nbsp;the&nbsp;DB.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Scraper-__init__"><strong>__init__</strong></a>(self, url)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="Scraper-scrape_crew"><strong>scrape_crew</strong></a>(self)</dt><dd><tt>Scrape&nbsp;the&nbsp;directors,&nbsp;and&nbsp;the&nbsp;writers&nbsp;of&nbsp;the&nbsp;selected&nbsp;film.</tt></dd></dl>
+
+<dl><dt><a name="Scraper-scrape_technical_data"><strong>scrape_technical_data</strong></a>(self)</dt><dd><tt>Scrape&nbsp;the&nbsp;runtime,&nbsp;and&nbsp;the&nbsp;countries&nbsp;of&nbsp;the&nbsp;selected&nbsp;film.</tt></dd></dl>
+
+<dl><dt><a name="Scraper-scrape_top_250"><strong>scrape_top_250</strong></a>(self)</dt><dd><tt>Scrape&nbsp;the&nbsp;top&nbsp;250&nbsp;film&nbsp;list.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="WebImage">class <strong>WebImage</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#WebImage">WebImage</a>(url)<br>
+&nbsp;<br>
+Opens&nbsp;an&nbsp;image&nbsp;based&nbsp;on&nbsp;its&nbsp;URL.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="WebImage-__init__"><strong>__init__</strong></a>(self, url)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="WebImage-get"><strong>get</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-get_country_image_name"><strong>get_country_image_name</strong></a>(country)</dt><dd><tt>Return&nbsp;the&nbsp;country&nbsp;flag&nbsp;image&nbsp;name.</tt></dd></dl>
+</td></tr></table>
+</body></html>
